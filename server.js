@@ -3,6 +3,7 @@ require('dotenv').config(); // Cargar variables de entorno desde .env
 const express = require('express');
 const mysql = require('mysql');
 const path = require('path');
+const XLSX = require('xlsx');
 
 const app = express();
 
@@ -47,10 +48,50 @@ app.get('/data', (req, res) => {
   });
 });
 
+// Ruta para descargar los datos como un archivo Excel
+app.get('/descargar-excel', (req, res) => {
+  // Ejecutar la misma consulta SQL
+  const query = `
+    SELECT stock.IDProducto, medicamentos.Producto, medicamentos.codebar,  
+           medicamentos.Presentaci, medicamentos.Unidades, stock.Sucursal, 
+           stock.Cantidad
+    FROM stock 
+    INNER JOIN medicamentos ON stock.IDProducto = medicamentos.CodPlex
+  `;
+
+  connection.query(query, (err, results) => {
+    if (err) {
+      console.error('Error al ejecutar la consulta: ', err);
+      res.status(500).send('Error al obtener los datos');
+      return;
+    }
+
+    // Procesar los resultados de la consulta
+    const data = results.map(row => [row.IDProducto, row.Producto, row.codebar, row.Presentaci, row.Unidades, row.Sucursal, row.Cantidad]);
+
+    // Crear un nuevo libro de Excel y hoja de cálculo
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.aoa_to_sheet(data);
+
+    // Agregar la hoja de cálculo al libro
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Datos');
+
+    // Convertir el libro a un buffer
+    const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+
+    // Establecer las cabeceras para la descarga del archivo
+    res.set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.set('Content-Disposition', 'attachment; filename=datos.xlsx');
+
+    // Enviar el buffer del archivo Excel como respuesta
+    res.send(buffer);
+  });
+});
+
 // Servir archivos estáticos desde la carpeta 'public'
 app.use(express.static(path.join(__dirname, 'public')));
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Servidor web escuchando en el puerto ${PORT}`);
 });
