@@ -69,9 +69,13 @@ app.get('/descargar-excel', (req, res) => {
     // Procesar los resultados de la consulta
     const data = results.map(row => [row.IDProducto, row.Producto, row.codebar, row.Presentaci, row.Unidades, row.Sucursal, row.Cantidad]);
 
-    // Crear un nuevo libro de Excel y hoja de cálculo
-    const workbook = XLSX.utils.book_new();
-    const worksheet = XLSX.utils.aoa_to_sheet(data);
+       // Agregar los encabezados de columna
+       const headers = ['ID Producto', 'Producto', 'Código de Barras', 'Presentación', 'Unidades', 'Sucursal', 'Cantidad'];
+       const excelData = [headers, ...data];
+   
+       // Crear un nuevo libro de Excel y hoja de cálculo
+       const workbook = XLSX.utils.book_new();
+       const worksheet = XLSX.utils.aoa_to_sheet(excelData);
 
     // Agregar la hoja de cálculo al libro
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Datos');
