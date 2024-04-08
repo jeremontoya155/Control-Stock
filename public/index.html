@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tabla de Productos</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        .pagination-box {
+            background-color: white;
+            border: 1px solid #ccc;
+            padding: 5px;
+            margin-top: 10px;
+            margin-bottom: 20px;
+        }
+        .page-number {
+            border: 1px solid #ccc;
+            padding: 5px 10px;
+            margin: 0 5px;
+            cursor: pointer;
+        }
+        .page-number.active {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">Tabla de Productos</h1>
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <input type="text" id="filtroProducto" class="form-control" placeholder="Filtrar por producto">
+            </div>
+            <div class="col-md-6">
+                <select id="filtroSucursal" class="form-control">
+                    <!-- Opciones de sucursal se cargarán dinámicamente -->
+                </select>
+            </div>
+        </div>
+        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>ID Producto</th>
+                        <th>Código de Barras</th>
+                        <th>Producto</th>
+                        <th>Unidades</th>
+                        <th>Sucursal</th>
+                        <th>Cantidad</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaProductos">
+                    <!-- La tabla se llenará dinámicamente con JavaScript -->
+                </tbody>
+            </table>
+        </div>
+        <div class="text-center pagination-box">
+            <div id="pagination"></div>
+            <button id="cargarMas" class="btn btn-primary mt-2">Cargar más</button>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS y jQuery (opcional, solo si se usan funcionalidades de Bootstrap que requieren JS) -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const filtroProductoInput = document.getElementById("filtroProducto");
+            const filtroSucursalSelect = document.getElementById("filtroSucursal");
+            const tablaProductosBody = document.getElementById("tablaProductos");
+            const paginationDiv = document.getElementById("pagination");
+            const cargarMasButton = document.getElementById("cargarMas");
+
+            let currentPage = 1;
+            const itemsPerPage = 10;
+            let totalPages = 1;
+
+            function cargarDatos() {
+                fetch(`/data?page=${currentPage}&perPage=${itemsPerPage}`)
+                .then(response => response.json())
+                .then(data => {
+                    mostrarProductos(data);
+                })
+                .catch(error => console.error('Error al cargar los datos:', error));
+            }
+
+            function mostrarProductos(productos) {
+                tablaProductosBody.innerHTML = "";
+                const filtroProducto = filtroProductoInput.value.toLowerCase();
+                const filtroSucursal = parseInt(filtroSucursalSelect.value);
+
+                const productosFiltrados = productos.filter(producto => {
+                    return (producto.Producto.toLowerCase().includes(filtroProducto) || filtroProducto === "") &&
+                        (filtroSucursal === 0 || producto.Sucursal === filtroSucursal);
+                });
+
+                productosFiltrados.forEach(producto => {
+                    const fila = document.createElement("tr");
+                    fila.innerHTML = `
+                        <td>${producto.IDProducto}</td>
+                        <td>${producto.codebar}</td>
+                        <td>${producto.Producto} ${producto.Presentaci}</td>
+                        <td>${producto.Unidades}</td>
+                        <td>${producto.Sucursal}</td>
+                        <td>${producto.Cantidad}</td>
+                    `;
+                    tablaProductosBody.appendChild(fila);
+                });
+
+                mostrarPaginacion(productosFiltrados.length);
+            }
+
+            function mostrarPaginacion(totalItems) {
+                totalPages = Math.ceil(totalItems / itemsPerPage);
+                paginationDiv.innerHTML = "";
+
+                const maxPagesToShow = 20;
+                const startPage = currentPage;
+                const endPage = Math.min(startPage + maxPagesToShow - 1, totalPages);
+
+                for (let i = startPage; i <= endPage; i++) {
+                    const link = document.createElement("button");
+                    link.type = "button";
+                    link.classList.add("page-number", "btn");
+                    link.innerText = i;
+                    if (i === currentPage) {
+                        link.classList.add("active");
+                    }
+                    link.addEventListener("click", function() {
+                        currentPage = i;
+                        cargarDatos();
+                    });
+                    paginationDiv.appendChild(link);
+                }
+
+                if (endPage < totalPages) {
+                    cargarMasButton.style.display = "block";
+                } else {
+                    cargarMasButton.style.display = "none";
+                }
+            }
+
+            cargarDatos();
+
+            // Llenar el filtro de sucursal con números del 1 al 26
+            for (let i = 1; i <= 26; i++) {
+                const option = document.createElement("option");
+                option.value = i;
+                option.textContent = `Sucursal ${i}`;
+                filtroSucursalSelect.appendChild(option);
+            }
+
+            filtroProductoInput.addEventListener("input", cargarDatos);
+            filtroSucursalSelect.addEventListener("change", cargarDatos);
+
+            cargarMasButton.addEventListener("click", function() {
+                currentPage++;
+                cargarDatos();
+            });
+        });
+    </script>
+</body>
+</html>
