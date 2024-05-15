@@ -13,6 +13,10 @@
             padding: 5px;
             margin-top: 10px;
             margin-bottom: 20px;
+
+            display: flex; 
+            align-items: center;
+            justify-content: space-between;
         }
         .page-number {
             border: 1px solid #ccc;
@@ -21,14 +25,102 @@
             cursor: pointer;
         }
         .page-number.active {
-            background-color: #007bff;
+            background-color: #1291aa;
             color: white;
-            border-color: #007bff;
+            border-color: #1291aa;
+        }
+
+        .botonPrincipal{
+            background-color: #1291aa;
+            border-color: #1291aa;
+            color: #fff;
+        }
+        .botonPrincipal:hover{
+            background-color: #ea9e04;
+            color: #fff;
+        }
+        .botonPrincipal:focus{
+            background-color: #ea9e04;
+        }
+        .botonSecundario{
+            background-color: #ea9d04c7;
+            border-color: #ea9e04;
+            color: #fff;
+        }
+        .botonSecundario:hover{
+            background-color: #1291aa;
+            color: #fff;
+        }
+        .botonSecundario:focus{
+            background-color: #1291aa;
+        }
+        .banner{
+            background-color: #1291aa;
+            color: #f8f9fa;
+            padding: 1.6em;
+            width:100%;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-flow: column wrap; 
+
+            .underline { 
+                height: 5px;
+                width:27%;
+                background-color: #ea9e04;
+            }
+
+            .logo1 {
+                flex:1;
+            }
+            .farmacias{
+                letter-spacing: 0.35em;
+            }
+        }
+        .formulario{ 
+            display: flex; 
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .botonDescarga{
+            display: flex;
+            justify-content: flex-end;
+            align-items: flex-end;
+            width:100%;
+        }
+
+
+        ::-webkit-scrollbar {
+            width: 10px; 
+        }
+
+
+        ::-webkit-scrollbar-track {
+            -webkit-box-shadow: inset 0 0 8px #1291aa;
+            border-radius: 6px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            border-radius: 6px;
+            -webkit-box-shadow: inset 0 0 9px #ea9e04;
+
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            -webkit-box-shadow: inset 0 0 15px #ea9e04;
+            background-clip: padding-box; 
         }
     </style>
 </head>
 <body>
-    <div class="container mt-5">
+    <div class="banner">
+        <div class="underline"></div>
+        <h1 class="logo1 farmacias">FARMACIAS</h1>  
+        <h2 class="logo1">SANCHEZ ANTONIOLLI</h2>
+    </div>
+    <div class="container mt-4">
         <h1 class="text-center mb-4">Tabla de Productos</h1>
         <div class="row mb-3">
             <div class="col-md-6">
@@ -58,8 +150,9 @@
             </table>
         </div>
         <div class="text-center pagination-box">
+            <button id="cargarMenos" class="btn btn-primary mt-2"><</button>
             <div id="pagination"></div>
-            <button id="cargarMas" class="btn btn-primary mt-2">Cargar más</button>
+            <button id="cargarMas" class="btn btn-primary mt-2">></button>
         </div>
         <!-- Botón de descarga de Excel -->
         <div class="text-center mt-3">
@@ -79,6 +172,7 @@
             const tablaProductosBody = document.getElementById("tablaProductos");
             const paginationDiv = document.getElementById("pagination");
             const cargarMasButton = document.getElementById("cargarMas");
+            const cargarMenosButton = document.getElementById("cargarMenos");
             const descargarExcelButton = document.getElementById("descargarExcel");
 
             let currentPage = 1;
@@ -144,9 +238,14 @@
                 }
 
                 if (endPage < totalPages) {
-                    cargarMasButton.style.display = "block";
+                    cargarMasButton.disabled = false;
                 } else {
-                    cargarMasButton.style.display = "none";
+                    cargarMasButton.disabled = true;
+                }
+                if (currentPage < 2) {
+                    cargarMenosButton.disabled = true;
+                } else {
+                    cargarMenosButton.disabled = false;
                 }
             }
 
@@ -155,9 +254,17 @@
             // Llenar el filtro de sucursal con números del 1 al 26
             for (let i = 1; i <= 26; i++) {
                 const option = document.createElement("option");
-                option.value = i;
-                option.textContent = `Sucursal ${i}`;
+                if(i == 26){
+                    option.value = 32;
+                    option.textContent = `SA ${i}`;
+                } else if(i == 13){
+                    continue;
+                } else {
+                    option.value = i;
+                    option.textContent = `SA ${i}`;
+                }
                 filtroSucursalSelect.appendChild(option);
+
             }
 
             filtroProductoInput.addEventListener("input", cargarDatos);
@@ -165,6 +272,10 @@
 
             cargarMasButton.addEventListener("click", function() {
                 currentPage++;
+                cargarDatos();
+            });
+            cargarMenosButton.addEventListener("click", function() {
+                currentPage--;
                 cargarDatos();
             });
 
